@@ -1,0 +1,12 @@
+{
+  "name": "bounty-zapier-integration",
+  "version": "1.0.0",
+  "description": "Zapier/Make webhook relay for AI Bounty Board events",
+  "main": "index.ts",
+  "scripts": {
+    "dev": "bun run --watch index.ts",
+    "start": "bun run index.ts"
+  },
+  "keywords": ["zapier", "make", "bounty", "webhook", "automation"],
+  "license": "MIT"
+}
