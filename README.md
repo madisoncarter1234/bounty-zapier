@@ -45,9 +45,11 @@ bun run start
 2. Add **Webhooks** -> **Custom webhook** module
 3. Copy the URL into `WEBHOOK_URLS`
 
-## Tag Filtering
+## Filtering
 
-Set `FILTER_TAGS=coding,agents` to only fire webhooks for bounties with matching tags.
+- **By tags:** `FILTER_TAGS=coding,agents` — only bounties with matching tags
+- **By reward:** `FILTER_MIN_REWARD=10` — only bounties worth 10+ USDC
+- Combine both for precise filtering
 
 ## Endpoints
 

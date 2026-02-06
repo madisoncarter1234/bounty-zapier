@@ -10,6 +10,7 @@ const FILTER_TAGS = (process.env.FILTER_TAGS || "")
   .split(",")
   .map((t) => t.trim().toLowerCase())
   .filter(Boolean);
+const FILTER_MIN_REWARD = parseFloat(process.env.FILTER_MIN_REWARD || "0");
 const PORT = parseInt(process.env.PORT || "3001", 10);
 
 const STATE_FILE = new URL("./state.json", import.meta.url).pathname;
@@ -17,6 +18,7 @@ const STATE_FILE = new URL("./state.json", import.meta.url).pathname;
 interface Bounty {
   id: string;
   title: string;
+  description: string;
   tags: string[];
   reward: string;
   rewardFormatted: string;
@@ -26,6 +28,7 @@ interface Bounty {
   updatedAt: number;
   claimedBy?: string;
   completedAt?: number;
+  requirements?: string[];
 }
 
 interface State {
@@ -60,9 +63,15 @@ function saveState(state: State) {
   writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
 }
 
-function matchesTags(bounty: Bounty): boolean {
-  if (FILTER_TAGS.length === 0) return true;
-  return bounty.tags.some((t) => FILTER_TAGS.includes(t.toLowerCase()));
+function matchesFilters(bounty: Bounty): boolean {
+  if (FILTER_TAGS.length > 0) {
+    if (!bounty.tags.some((t) => FILTER_TAGS.includes(t.toLowerCase()))) return false;
+  }
+  if (FILTER_MIN_REWARD > 0) {
+    const usdc = Number(bounty.reward) / 1e6;
+    if (usdc < FILTER_MIN_REWARD) return false;
+  }
+  return true;
 }
 
 const STATUS_TO_EVENT: Record<string, EventType> = {
@@ -107,7 +116,7 @@ async function poll(): Promise<{ created: number; changed: number; errors: numbe
     const bounties = await fetchBounties();
 
     for (const bounty of bounties) {
-      if (!matchesTags(bounty)) continue;
+      if (!matchesFilters(bounty)) continue;
 
       const prevStatus = state.bounties[bounty.id];
 
@@ -192,7 +201,8 @@ console.log("  Bounty Board Zapier/Make Integration");
 console.log("=".repeat(50));
 console.log(`  Server:     http://localhost:${PORT}`);
 console.log(`  Webhooks:   ${WEBHOOK_URLS.length > 0 ? WEBHOOK_URLS.join(", ") : "(none configured)"}`);
-console.log(`  Filter:     ${FILTER_TAGS.length > 0 ? FILTER_TAGS.join(", ") : "(all bounties)"}`);
+console.log(`  Tags:       ${FILTER_TAGS.length > 0 ? FILTER_TAGS.join(", ") : "(all)"}`);
+console.log(`  Min reward: ${FILTER_MIN_REWARD > 0 ? FILTER_MIN_REWARD + " USDC" : "(any)"}`);
 console.log(`  Interval:   ${POLL_INTERVAL / 1000}s`);
 console.log("=".repeat(50));
 
